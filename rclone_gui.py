@@ -749,6 +749,9 @@ class RcloneGUI(QMainWindow):
         self.setup_status_bar()
         self.setup_timers()
         
+        # Initialize Quest functionality after UI is ready
+        self.init_quest_functionality()
+        
         # Check for updates on startup if enabled
         if self.update_settings.should_check_for_updates():
             QTimer.singleShot(3000, self.check_for_updates_background)  # Check after 3 seconds
@@ -763,6 +766,7 @@ class RcloneGUI(QMainWindow):
         self.setup_explorer_tab()
         self.setup_transfers_tab()
         self.setup_logs_tab()
+        self.setup_quest_tab()
         
         # Apply comprehensive styling
         self.apply_custom_styling()
@@ -956,6 +960,118 @@ class RcloneGUI(QMainWindow):
         self.log_viewer.setFont(QFont("Consolas", 10))
         layout.addWidget(self.log_viewer)
     
+    def setup_quest_tab(self):
+        """Setup Quest VR sideloading tab"""
+        quest_widget = QWidget()
+        self.tabs.addTab(quest_widget, "🥽 Quest")
+        main_layout = QVBoxLayout(quest_widget)
+        
+        # Quest Status Section
+        status_group = QGroupBox("Quest Headset Status")
+        status_layout = QVBoxLayout(status_group)
+        
+        # Connection status
+        self.quest_status_label = QLabel("🔴 No Quest Connected")
+        self.quest_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        status_layout.addWidget(self.quest_status_label)
+        
+        # Connection buttons
+        connection_layout = QHBoxLayout()
+        self.refresh_quest_btn = QPushButton("🔄 Refresh Devices")
+        self.refresh_quest_btn.clicked.connect(self.refresh_quest_devices)
+        connection_layout.addWidget(self.refresh_quest_btn)
+        
+        self.enable_wireless_btn = QPushButton("📡 Enable Wireless ADB")
+        self.enable_wireless_btn.clicked.connect(self.enable_wireless_adb)
+        connection_layout.addWidget(self.enable_wireless_btn)
+        
+        self.pair_quest_btn = QPushButton("🔗 Pair Quest")
+        self.pair_quest_btn.clicked.connect(self.pair_quest_device)
+        connection_layout.addWidget(self.pair_quest_btn)
+        
+        status_layout.addLayout(connection_layout)
+        main_layout.addWidget(status_group)
+        
+        # Device Info Section
+        device_group = QGroupBox("Device Information")
+        device_layout = QFormLayout(device_group)
+        
+        self.device_model_label = QLabel("N/A")
+        self.device_battery_label = QLabel("N/A")
+        self.device_storage_label = QLabel("N/A")
+        self.device_version_label = QLabel("N/A")
+        
+        device_layout.addRow("Model:", self.device_model_label)
+        device_layout.addRow("Battery:", self.device_battery_label)
+        device_layout.addRow("Storage:", self.device_storage_label)
+        device_layout.addRow("OS Version:", self.device_version_label)
+        
+        main_layout.addWidget(device_group)
+        
+        # APK Management Section
+        apk_group = QGroupBox("APK Management")
+        apk_layout = QVBoxLayout(apk_group)
+        
+        # APK installation
+        install_layout = QHBoxLayout()
+        self.install_apk_btn = QPushButton("📱 Install APK from PC")
+        self.install_apk_btn.clicked.connect(self.install_apk_from_pc)
+        install_layout.addWidget(self.install_apk_btn)
+        
+        self.install_cloud_btn = QPushButton("☁️ Install APK from Cloud")
+        self.install_cloud_btn.clicked.connect(self.install_apk_from_cloud)
+        install_layout.addWidget(self.install_cloud_btn)
+        
+        apk_layout.addLayout(install_layout)
+        
+        # Installed apps table
+        self.installed_apps_table = QTableWidget()
+        self.installed_apps_table.setColumnCount(5)
+        self.installed_apps_table.setHorizontalHeaderLabels(["App Name", "Package", "Version", "Size", "Actions"])
+        self.installed_apps_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        apk_layout.addWidget(self.installed_apps_table)
+        
+        # App management buttons
+        app_controls = QHBoxLayout()
+        self.refresh_apps_btn = QPushButton("🔄 Refresh Apps")
+        self.refresh_apps_btn.clicked.connect(self.refresh_installed_apps)
+        app_controls.addWidget(self.refresh_apps_btn)
+        
+        self.backup_apk_btn = QPushButton("💾 Backup APK")
+        self.backup_apk_btn.clicked.connect(self.backup_selected_apk)
+        app_controls.addWidget(self.backup_apk_btn)
+        
+        self.uninstall_app_btn = QPushButton("🗑️ Uninstall App")
+        self.uninstall_app_btn.clicked.connect(self.uninstall_selected_app)
+        app_controls.addWidget(self.uninstall_app_btn)
+        
+        app_controls.addStretch()
+        apk_layout.addLayout(app_controls)
+        
+        main_layout.addWidget(apk_group)
+        
+        # File Transfer Section
+        transfer_group = QGroupBox("File Transfer")
+        transfer_layout = QVBoxLayout(transfer_group)
+        
+        # Transfer buttons
+        transfer_buttons = QHBoxLayout()
+        self.push_files_btn = QPushButton("📤 Push Files to Quest")
+        self.push_files_btn.clicked.connect(self.push_files_to_quest)
+        transfer_buttons.addWidget(self.push_files_btn)
+        
+        self.pull_files_btn = QPushButton("📥 Pull Files from Quest")
+        self.pull_files_btn.clicked.connect(self.pull_files_from_quest)
+        transfer_buttons.addWidget(self.pull_files_btn)
+        
+        transfer_layout.addLayout(transfer_buttons)
+        
+        main_layout.addWidget(transfer_group)
+        
+        # Initialize Quest functionality
+        self.quest_connected = False
+        self.connected_quest_device = None
+        self.adb_path = None  # Will be initialized after UI setup
 
     def apply_custom_styling(self):
         """Apply comprehensive custom styling matching the original theme"""
@@ -2416,6 +2532,409 @@ class RcloneGUI(QMainWindow):
             
         except Exception as e:
             self.log_message(f"Error showing about dialog: {str(e)}", "error")
+    
+    def init_quest_functionality(self):
+        """Initialize Quest functionality after UI is ready"""
+        try:
+            # Now that UI is ready, we can safely initialize ADB
+            self.adb_path = self.find_adb_path()
+            
+            # Initial device scan after a short delay
+            QTimer.singleShot(1000, self.refresh_quest_devices)
+            
+        except Exception as e:
+            self.log_message(f"Error initializing Quest functionality: {str(e)}", "error")
+    
+    # Quest VR Sideloading Methods
+    def find_adb_path(self):
+        """Find ADB executable path"""
+        possible_paths = [
+            "adb.exe",
+            "adb",
+            os.path.join(os.path.expanduser("~"), "AppData", "Local", "Android", "Sdk", "platform-tools", "adb.exe"),
+            os.path.join("C:", "Users", os.getlogin(), "AppData", "Local", "Android", "Sdk", "platform-tools", "adb.exe"),
+            os.path.join(self.script_dir, "adb.exe")
+        ]
+        
+        for path in possible_paths:
+            try:
+                result = subprocess.run([path, "version"], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    self.log_message(f"Found ADB at: {path}", "info")
+                    return path
+            except:
+                continue
+        
+        self.log_message("ADB not found. Please install Android SDK or place adb.exe in the application folder.", "warning")
+        return None
+    
+    def run_adb_command(self, command, timeout=30):
+        """Run ADB command and return result"""
+        if not self.adb_path:
+            return None, "ADB not found"
+        
+        try:
+            full_command = [self.adb_path] + command
+            result = subprocess.run(full_command, capture_output=True, text=True, timeout=timeout)
+            return result.stdout.strip(), result.stderr.strip()
+        except subprocess.TimeoutExpired:
+            return None, "Command timed out"
+        except Exception as e:
+            return None, str(e)
+    
+    def refresh_quest_devices(self):
+        """Refresh and detect Quest devices"""
+        self.log_message("Scanning for Quest devices...", "info")
+        
+        if not self.adb_path:
+            self.quest_status_label.setText("❌ ADB not found")
+            return
+        
+        stdout, stderr = self.run_adb_command(["devices"])
+        
+        if stdout:
+            devices = []
+            for line in stdout.split('\n')[1:]:  # Skip header line
+                if line.strip() and '\t' in line:
+                    device_id, status = line.split('\t')
+                    if status == 'device':
+                        devices.append(device_id)
+            
+            if devices:
+                self.quest_connected = True
+                self.connected_quest_device = devices[0]  # Use first device
+                self.quest_status_label.setText(f"🟢 Quest Connected: {self.connected_quest_device}")
+                self.log_message(f"Quest device connected: {self.connected_quest_device}", "info")
+                self.get_device_info()
+                self.refresh_installed_apps()
+            else:
+                self.quest_connected = False
+                self.connected_quest_device = None
+                self.quest_status_label.setText("🔴 No Quest Connected")
+                self.log_message("No Quest devices found", "warning")
+        else:
+            self.quest_status_label.setText("❌ ADB Error")
+            self.log_message(f"ADB error: {stderr}", "error")
+    
+    def get_device_info(self):
+        """Get device information"""
+        if not self.quest_connected:
+            return
+        
+        # Get device model
+        stdout, _ = self.run_adb_command(["shell", "getprop", "ro.product.model"])
+        if stdout:
+            self.device_model_label.setText(stdout)
+        
+        # Get battery info
+        stdout, _ = self.run_adb_command(["shell", "dumpsys", "battery"])
+        if stdout:
+            for line in stdout.split('\n'):
+                if 'level:' in line:
+                    battery_level = line.split(':')[1].strip()
+                    self.device_battery_label.setText(f"{battery_level}%")
+                    break
+        
+        # Get storage info
+        stdout, _ = self.run_adb_command(["shell", "df", "/data"])
+        if stdout:
+            lines = stdout.split('\n')
+            if len(lines) > 1:
+                parts = lines[1].split()
+                if len(parts) >= 4:
+                    used_gb = int(parts[2]) / 1024 / 1024
+                    total_gb = int(parts[1]) / 1024 / 1024
+                    self.device_storage_label.setText(f"{used_gb:.1f}GB / {total_gb:.1f}GB")
+        
+        # Get Android version
+        stdout, _ = self.run_adb_command(["shell", "getprop", "ro.build.version.release"])
+        if stdout:
+            self.device_version_label.setText(f"Android {stdout}")
+    
+    def enable_wireless_adb(self):
+        """Enable wireless ADB on Quest"""
+        if not self.quest_connected:
+            QMessageBox.warning(self, "No Device", "Please connect your Quest via USB first.")
+            return
+        
+        self.log_message("Enabling wireless ADB...", "info")
+        stdout, stderr = self.run_adb_command(["tcpip", "5555"])
+        
+        if "restarting in TCP mode" in stdout:
+            self.log_message("Wireless ADB enabled. You can now disconnect USB.", "info")
+            QMessageBox.information(self, "Wireless ADB", "Wireless ADB enabled successfully!\n\nYou can now disconnect the USB cable and use wireless connection.")
+        else:
+            self.log_message(f"Failed to enable wireless ADB: {stderr}", "error")
+            QMessageBox.warning(self, "Error", f"Failed to enable wireless ADB: {stderr}")
+    
+    def pair_quest_device(self):
+        """Pair Quest device wirelessly"""
+        ip_address, ok = QInputDialog.getText(self, "Pair Quest", "Enter Quest IP address:")
+        if ok and ip_address:
+            self.log_message(f"Attempting to connect to {ip_address}:5555...", "info")
+            stdout, stderr = self.run_adb_command(["connect", f"{ip_address}:5555"])
+            
+            if "connected" in stdout.lower():
+                self.log_message(f"Connected to Quest at {ip_address}", "info")
+                self.refresh_quest_devices()
+            else:
+                self.log_message(f"Failed to connect: {stderr}", "error")
+                QMessageBox.warning(self, "Connection Failed", f"Failed to connect to Quest: {stderr}")
+    
+    def refresh_installed_apps(self):
+        """Refresh list of installed apps"""
+        if not self.quest_connected:
+            return
+        
+        self.log_message("Refreshing installed apps...", "info")
+        stdout, stderr = self.run_adb_command(["shell", "pm", "list", "packages", "-3"])
+        
+        if stdout:
+            self.installed_apps_table.setRowCount(0)
+            packages = []
+            
+            for line in stdout.split('\n'):
+                if line.startswith('package:'):
+                    package_name = line.split(':')[1].strip()
+                    packages.append(package_name)
+            
+            # Get detailed info for each package
+            for i, package in enumerate(packages):
+                self.installed_apps_table.insertRow(i)
+                
+                # Get app name
+                app_name = self.get_app_name(package)
+                self.installed_apps_table.setItem(i, 0, QTableWidgetItem(app_name))
+                self.installed_apps_table.setItem(i, 1, QTableWidgetItem(package))
+                
+                # Get version
+                version = self.get_app_version(package)
+                self.installed_apps_table.setItem(i, 2, QTableWidgetItem(version))
+                
+                # Get size (placeholder)
+                self.installed_apps_table.setItem(i, 3, QTableWidgetItem("N/A"))
+                
+                # Add action buttons
+                actions_widget = QWidget()
+                actions_layout = QHBoxLayout(actions_widget)
+                
+                backup_btn = QPushButton("💾")
+                backup_btn.setToolTip("Backup APK")
+                backup_btn.clicked.connect(lambda checked, pkg=package: self.backup_apk(pkg))
+                actions_layout.addWidget(backup_btn)
+                
+                uninstall_btn = QPushButton("🗑️")
+                uninstall_btn.setToolTip("Uninstall")
+                uninstall_btn.clicked.connect(lambda checked, pkg=package: self.uninstall_app(pkg))
+                actions_layout.addWidget(uninstall_btn)
+                
+                self.installed_apps_table.setCellWidget(i, 4, actions_widget)
+        
+        self.log_message(f"Found {len(packages)} installed apps", "info")
+    
+    def get_app_name(self, package_name):
+        """Get human-readable app name"""
+        stdout, _ = self.run_adb_command(["shell", "pm", "dump", package_name])
+        if stdout:
+            for line in stdout.split('\n'):
+                if 'labelRes=' in line:
+                    # Try to get label resource
+                    break
+        return package_name.split('.')[-1].title()  # Fallback to package name
+    
+    def get_app_version(self, package_name):
+        """Get app version"""
+        stdout, _ = self.run_adb_command(["shell", "pm", "dump", package_name])
+        if stdout:
+            for line in stdout.split('\n'):
+                if 'versionName=' in line:
+                    return line.split('=')[1].strip()
+        return "Unknown"
+    
+    def install_apk_from_pc(self):
+        """Install APK from PC"""
+        if not self.quest_connected:
+            QMessageBox.warning(self, "No Device", "Please connect your Quest first.")
+            return
+        
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select APK File", "", "APK Files (*.apk)")
+        if file_path:
+            self.install_apk_file(file_path)
+    
+    def install_apk_from_cloud(self):
+        """Install APK from cloud storage"""
+        if not self.quest_connected:
+            QMessageBox.warning(self, "No Device", "Please connect your Quest first.")
+            return
+        
+        if not self.current_remote:
+            QMessageBox.warning(self, "No Remote", "Please select a cloud storage remote first.")
+            return
+        
+        # Show file dialog to select APK from cloud
+        selected_row = self.file_table.currentRow()
+        if selected_row >= 0:
+            file_name = self.file_table.item(selected_row, 1).text()
+            if file_name.lower().endswith('.apk'):
+                self.download_and_install_apk(file_name)
+            else:
+                QMessageBox.warning(self, "Invalid File", "Please select an APK file.")
+        else:
+            QMessageBox.information(self, "Cloud APK Install", "Please go to the Explorer tab, navigate to your APK files, and select one to install.")
+    
+    def install_apk_file(self, file_path):
+        """Install APK file to Quest"""
+        self.log_message(f"Installing APK: {os.path.basename(file_path)}", "info")
+        
+        # Create progress dialog
+        progress = QProgressDialog("Installing APK...", "Cancel", 0, 100, self)
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.show()
+        
+        # Install APK
+        stdout, stderr = self.run_adb_command(["install", file_path], timeout=120)
+        
+        progress.close()
+        
+        if "Success" in stdout:
+            self.log_message(f"APK installed successfully: {os.path.basename(file_path)}", "info")
+            QMessageBox.information(self, "Installation Complete", f"APK installed successfully: {os.path.basename(file_path)}")
+            self.refresh_installed_apps()
+        else:
+            self.log_message(f"APK installation failed: {stderr}", "error")
+            QMessageBox.warning(self, "Installation Failed", f"Failed to install APK: {stderr}")
+    
+    def download_and_install_apk(self, file_name):
+        """Download APK from cloud and install"""
+        self.log_message(f"Downloading and installing APK: {file_name}", "info")
+        
+        # Create temporary directory
+        temp_dir = tempfile.mkdtemp()
+        local_path = os.path.join(temp_dir, file_name)
+        
+        try:
+            # Download APK
+            remote_path = f"{self.current_remote.rstrip(':')}/{self.current_path.lstrip('/')}/{file_name}"
+            
+            # Use existing transfer system
+            self.start_transfer(remote_path, local_path, "download")
+            
+            # Wait for download to complete (simplified)
+            QTimer.singleShot(2000, lambda: self.check_and_install_apk(local_path, temp_dir))
+            
+        except Exception as e:
+            self.log_message(f"Error downloading APK: {str(e)}", "error")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+    
+    def check_and_install_apk(self, local_path, temp_dir):
+        """Check if APK download is complete and install"""
+        try:
+            if os.path.exists(local_path):
+                self.install_apk_file(local_path)
+            else:
+                QTimer.singleShot(1000, lambda: self.check_and_install_apk(local_path, temp_dir))
+                return
+        finally:
+            # Clean up temp directory
+            QTimer.singleShot(5000, lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+    
+    def backup_selected_apk(self):
+        """Backup selected APK"""
+        selected_row = self.installed_apps_table.currentRow()
+        if selected_row >= 0:
+            package_name = self.installed_apps_table.item(selected_row, 1).text()
+            self.backup_apk(package_name)
+    
+    def backup_apk(self, package_name):
+        """Backup APK file"""
+        if not self.quest_connected:
+            return
+        
+        # Get APK path
+        stdout, _ = self.run_adb_command(["shell", "pm", "path", package_name])
+        if stdout and stdout.startswith("package:"):
+            apk_path = stdout.split(':')[1].strip()
+            
+            # Choose backup location
+            backup_path, _ = QFileDialog.getSaveFileName(self, "Save APK Backup", f"{package_name}.apk", "APK Files (*.apk)")
+            if backup_path:
+                self.log_message(f"Backing up APK: {package_name}", "info")
+                stdout, stderr = self.run_adb_command(["pull", apk_path, backup_path])
+                
+                if os.path.exists(backup_path):
+                    self.log_message(f"APK backup completed: {backup_path}", "info")
+                    QMessageBox.information(self, "Backup Complete", f"APK backup completed: {backup_path}")
+                else:
+                    self.log_message(f"APK backup failed: {stderr}", "error")
+                    QMessageBox.warning(self, "Backup Failed", f"Failed to backup APK: {stderr}")
+    
+    def uninstall_selected_app(self):
+        """Uninstall selected app"""
+        selected_row = self.installed_apps_table.currentRow()
+        if selected_row >= 0:
+            package_name = self.installed_apps_table.item(selected_row, 1).text()
+            app_name = self.installed_apps_table.item(selected_row, 0).text()
+            
+            reply = QMessageBox.question(self, "Uninstall App", f"Are you sure you want to uninstall '{app_name}'?", 
+                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.uninstall_app(package_name)
+    
+    def uninstall_app(self, package_name):
+        """Uninstall app from Quest"""
+        if not self.quest_connected:
+            return
+        
+        self.log_message(f"Uninstalling app: {package_name}", "info")
+        stdout, stderr = self.run_adb_command(["uninstall", package_name])
+        
+        if "Success" in stdout:
+            self.log_message(f"App uninstalled successfully: {package_name}", "info")
+            QMessageBox.information(self, "Uninstall Complete", f"App uninstalled successfully: {package_name}")
+            self.refresh_installed_apps()
+        else:
+            self.log_message(f"App uninstallation failed: {stderr}", "error")
+            QMessageBox.warning(self, "Uninstall Failed", f"Failed to uninstall app: {stderr}")
+    
+    def push_files_to_quest(self):
+        """Push files from PC to Quest"""
+        if not self.quest_connected:
+            QMessageBox.warning(self, "No Device", "Please connect your Quest first.")
+            return
+        
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Files to Push", "", "All Files (*.*)")
+        if files:
+            quest_path = "/sdcard/Download/"
+            for file_path in files:
+                self.log_message(f"Pushing file: {os.path.basename(file_path)}", "info")
+                stdout, stderr = self.run_adb_command(["push", file_path, quest_path])
+                
+                if stderr and "error" not in stderr.lower():
+                    self.log_message(f"File pushed successfully: {os.path.basename(file_path)}", "info")
+                else:
+                    self.log_message(f"Failed to push file: {stderr}", "error")
+            
+            QMessageBox.information(self, "File Transfer", f"Pushed {len(files)} files to Quest Downloads folder.")
+    
+    def pull_files_from_quest(self):
+        """Pull files from Quest to PC"""
+        if not self.quest_connected:
+            QMessageBox.warning(self, "No Device", "Please connect your Quest first.")
+            return
+        
+        quest_path = "/sdcard/Download/"
+        local_dir = QFileDialog.getExistingDirectory(self, "Select Destination Folder")
+        
+        if local_dir:
+            self.log_message(f"Pulling files from Quest Downloads...", "info")
+            stdout, stderr = self.run_adb_command(["pull", quest_path, local_dir])
+            
+            if stderr and "error" not in stderr.lower():
+                self.log_message(f"Files pulled successfully to: {local_dir}", "info")
+                QMessageBox.information(self, "File Transfer", f"Files pulled successfully to: {local_dir}")
+            else:
+                self.log_message(f"Failed to pull files: {stderr}", "error")
+                QMessageBox.warning(self, "Transfer Failed", f"Failed to pull files: {stderr}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

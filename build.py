@@ -3,12 +3,177 @@ import shutil
 import PyInstaller.__main__
 import sys
 import glob
+import requests
+import zipfile
+import tempfile
+import platform
 from pathlib import Path
+from urllib.parse import urlparse
+
+def download_file(url, local_path, description):
+    """Download a file from URL with progress indication"""
+    try:
+        print(f"   🔄 Downloading {description}...")
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        total_size = int(response.headers.get('content-length', 0))
+        downloaded = 0
+        
+        with open(local_path, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    file.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size > 0:
+                        progress = (downloaded / total_size) * 100
+                        print(f"\r     Progress: {progress:.1f}%", end='', flush=True)
+        
+        print(f"\n   ✅ Downloaded {description} to {local_path}")
+        return True
+        
+    except Exception as e:
+        print(f"\n   ❌ Failed to download {description}: {str(e)}")
+        return False
+
+def download_and_extract_zip(url, extract_to, description, files_to_extract=None):
+    """Download and extract specific files from a ZIP archive"""
+    try:
+        print(f"   🔄 Downloading {description}...")
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zip_path = os.path.join(temp_dir, "download.zip")
+            
+            # Download ZIP file
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            
+            total_size = int(response.headers.get('content-length', 0))
+            downloaded = 0
+            
+            with open(zip_path, 'wb') as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        file.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size > 0:
+                            progress = (downloaded / total_size) * 100
+                            print(f"\r     Download Progress: {progress:.1f}%", end='', flush=True)
+            
+            print(f"\n   📦 Extracting {description}...")
+            
+            # Extract ZIP file
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                if files_to_extract:
+                    # Extract specific files
+                    for file_info in zip_ref.filelist:
+                        for target_file in files_to_extract:
+                            if target_file in file_info.filename:
+                                # Extract to specific location
+                                file_info.filename = os.path.basename(file_info.filename)
+                                zip_ref.extract(file_info, extract_to)
+                                print(f"     ✅ Extracted {file_info.filename}")
+                else:
+                    # Extract all files
+                    zip_ref.extractall(extract_to)
+                    print(f"     ✅ Extracted all files to {extract_to}")
+        
+        print(f"   ✅ {description} extraction completed")
+        return True
+        
+    except Exception as e:
+        print(f"\n   ❌ Failed to download/extract {description}: {str(e)}")
+        return False
+
+def download_rclone():
+    """Download rclone.exe for Windows"""
+    print("🔄 Downloading rclone.exe...")
+    
+    # rclone download URL for Windows
+    rclone_url = "https://downloads.rclone.org/rclone-current-windows-amd64.zip"
+    
+    return download_and_extract_zip(
+        rclone_url, 
+        ".", 
+        "rclone for Windows",
+        ["rclone.exe"]
+    )
+
+def download_quest_adb_tools():
+    """Download minimal ADB tools specifically for Quest sideloading"""
+    print("🔄 Downloading minimal ADB tools for Quest sideloading...")
+    
+    # Android SDK Platform Tools download URL (but we'll extract only what we need)
+    adb_url = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
+    
+    # Create quest_adb directory for minimal tools
+    quest_adb_dir = "quest_adb"
+    os.makedirs(quest_adb_dir, exist_ok=True)
+    
+    # Only download essential files for Quest sideloading
+    # fastboot.exe is not needed for Quest sideloading
+    quest_essential_files = ["adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll"]
+    
+    success = download_and_extract_zip(
+        adb_url,
+        quest_adb_dir,
+        "Quest ADB Tools (minimal)",
+        quest_essential_files
+    )
+    
+    if success:
+        # Copy adb.exe to main directory for easy access
+        adb_source = os.path.join(quest_adb_dir, "adb.exe")
+        if os.path.exists(adb_source):
+            shutil.copy2(adb_source, "adb.exe")
+            print("   ✅ Copied Quest ADB to main directory")
+        else:
+            # Look for adb.exe in subdirectories
+            for root, dirs, files in os.walk(quest_adb_dir):
+                if "adb.exe" in files:
+                    adb_source = os.path.join(root, "adb.exe")
+                    shutil.copy2(adb_source, "adb.exe")
+                    print(f"   ✅ Copied Quest ADB from {adb_source} to main directory")
+                    break
+    
+    return success
+
+def download_dependencies():
+    """Download all required dependencies"""
+    print("\n📦 Downloading required dependencies...")
+    
+    success = True
+    
+    # Download rclone.exe if missing
+    if not os.path.exists("rclone.exe"):
+        if not download_rclone():
+            success = False
+    else:
+        print("   ✅ rclone.exe already exists")
+    
+    # Download Quest ADB tools if missing
+    if not os.path.exists("adb.exe"):
+        if not download_quest_adb_tools():
+            success = False
+    else:
+        print("   ✅ Quest ADB tools already exist")
+    
+    if success:
+        print("   🎉 All dependencies downloaded successfully!")
+    else:
+        print("   ❌ Some dependencies failed to download")
+    
+    return success
 
 def build():
     print("="*60)
-    print("🚀 NGBrowser Build Script with Auto-Updater Support")
+    print("🚀 NGBrowser Build Script with Auto-Updater & Quest Support")
     print("="*60)
+    
+    # Download dependencies first
+    if not download_dependencies():
+        print("\n❌ Failed to download required dependencies!")
+        return False
     
     # Clean up previous build artifacts
     print("\n📁 Cleaning up previous build artifacts...")
@@ -26,11 +191,12 @@ def build():
                 print(f"   ⚠️ Warning: Could not remove {item}: {e}. Continuing...")
     
     # Check for required files
-    print("\n🔍 Checking required files...")
+    print("\n🔍 Verifying required files...")
     required_files = {
         'rclone_gui.py': '📄 Main application file',
         'auto_updater.py': '🔄 Auto-updater module',
-        'rclone.exe': '⚙️ rclone executable'
+        'rclone.exe': '⚙️ rclone executable (auto-downloaded)',
+        'adb.exe': '🔧 ADB for Quest sideloading (auto-downloaded)'
     }
     
     missing_files = []
@@ -42,9 +208,8 @@ def build():
             missing_files.append(file)
     
     if missing_files:
-        print(f"\n❌ Build failed! Missing required files: {', '.join(missing_files)}")
-        if 'rclone.exe' in missing_files:
-            print("   💡 Download rclone.exe from https://rclone.org/downloads/")
+        print(f"\n❌ Build verification failed! Missing files: {', '.join(missing_files)}")
+        print("   💡 This shouldn't happen if auto-download worked correctly.")
         return False
     
     # Check for optional files
@@ -102,8 +267,15 @@ def build():
         # Add rclone.exe as data
         '--add-data=rclone.exe;.',
         # Add auto-updater module
-        '--add-data=auto_updater.py;.'
+        '--add-data=auto_updater.py;.',
+        # Add ADB tools for Quest sideloading
+        '--add-data=adb.exe;.',
     ]
+    
+    # Add Quest ADB tools directory if it exists
+    if os.path.exists('quest_adb'):
+        cmd.append('--add-data=quest_adb;quest_adb')
+        print("   ✅ Including Quest ADB tools directory")
     
     # Add rclone.conf if it exists
     if os.path.exists('rclone.conf'):
@@ -147,12 +319,29 @@ def build():
                 else:
                     print("   ✅ rclone.conf already in dist folder")
             
+            # Check if Quest ADB tools should be copied
+            if os.path.exists('quest_adb'):
+                dist_quest_adb_dir = os.path.join('dist', 'quest_adb')
+                if not os.path.exists(dist_quest_adb_dir):
+                    shutil.copytree('quest_adb', dist_quest_adb_dir)
+                    print("   ✅ Copied Quest ADB tools to dist folder")
+                else:
+                    print("   ✅ Quest ADB tools already in dist folder")
+            
             print("\n🎉 Build completed successfully!")
             print("═" * 50)
             print("📋 Next Steps:")
             print("   1. Test the executable: dist\\NGBrowser.exe")
-            print("   2. Ensure rclone.conf is in the same directory")
-            print("   3. Upload to GitHub releases for auto-updater")
+            print("   2. Test Quest sideloading functionality")
+            print("   3. Ensure rclone.conf is in the same directory")
+            print("   4. Upload to GitHub releases for auto-updater")
+            print("═" * 50)
+            print("🎆 New Features Included:")
+            print("   • Quest VR sideloading support")
+            print("   • Auto-downloaded ADB tools")
+            print("   • APK installation from cloud storage")
+            print("   • Wireless ADB support")
+            print("   • App management and file transfer")
             print("═" * 50)
             return True
             
