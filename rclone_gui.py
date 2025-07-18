@@ -739,7 +739,7 @@ class RcloneGUI(QMainWindow):
         self.active_transfers = 0
         
         # Auto-updater initialization
-        self.app_version = "1.0.0"  # Current version
+        self.app_version = "1.0.1"  # Current version
         self.update_settings = UpdateSettings()
         self.auto_updater = None
         self.update_dialog = None
@@ -804,6 +804,355 @@ class RcloneGUI(QMainWindow):
         """Add update menu to the main window"""
         # This method is called from init_ui but may not be implemented yet
         pass
+    
+    def apply_custom_styling(self):
+        """Apply beautiful Frutiger Aero-inspired styling with glassy effects and vibrant gradients"""
+        # Frutiger Aero theme with glass effects, light gradients, and vibrant colors
+        app_style = """
+        QMainWindow {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                stop:0 #f0f8ff, stop:0.3 #e6f3ff, stop:0.7 #cce7ff, stop:1 #b3d9ff);
+            color: #2c3e50;
+            font-family: 'Segoe UI', 'Calibri', Arial, sans-serif;
+        }
+        
+        /* Tab Widget Styling - Glassy Aero Effect */
+        QTabWidget::pane {
+            border: 1px solid rgba(135, 206, 235, 0.6);
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:1 rgba(240, 248, 255, 0.8));
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        QTabBar::tab {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:0.5 rgba(230, 243, 255, 0.8), stop:1 rgba(204, 231, 255, 0.7));
+            border: 1px solid rgba(135, 206, 235, 0.5);
+            border-bottom: none;
+            padding: 12px 24px;
+            margin-right: 3px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 13px;
+            min-width: 120px;
+        }
+        
+        QTabBar::tab:selected {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 1.0), stop:0.5 rgba(173, 216, 255, 0.9), stop:1 rgba(135, 206, 235, 0.8));
+            border: 2px solid rgba(30, 144, 255, 0.7);
+            border-bottom: none;
+            color: #1e3a8a;
+        }
+        
+        QTabBar::tab:hover:!selected {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.95), stop:1 rgba(224, 240, 255, 0.85));
+            border-color: rgba(30, 144, 255, 0.4);
+        }
+        
+        /* Button Styling - Glassy Aero Buttons */
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:0.5 rgba(173, 216, 255, 0.8), stop:1 rgba(135, 206, 235, 0.7));
+            border: 1px solid rgba(30, 144, 255, 0.6);
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: #1e3a8a;
+            font-weight: 600;
+            font-size: 13px;
+            min-height: 16px;
+        }
+        
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 1.0), stop:0.5 rgba(173, 216, 255, 0.9), stop:1 rgba(100, 200, 255, 0.8));
+            border: 2px solid rgba(30, 144, 255, 0.8);
+        }
+        
+        QPushButton:pressed {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(173, 216, 255, 0.9), stop:1 rgba(135, 206, 235, 0.8));
+            border: 2px solid rgba(30, 144, 255, 1.0);
+        }
+        
+        QPushButton:disabled {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(240, 240, 240, 0.5), stop:1 rgba(220, 220, 220, 0.5));
+            border: 1px solid rgba(180, 180, 180, 0.5);
+            color: rgba(100, 100, 100, 0.7);
+        }
+        
+        /* Secondary buttons */
+        QPushButton[class="secondary"] {
+            background-color: #3c3c3c;
+            color: #ffffff;
+        }
+        
+        QPushButton[class="secondary"]:hover {
+            background-color: #484848;
+        }
+        
+        /* Danger buttons */
+        QPushButton[class="danger"] {
+            background-color: #d13438;
+        }
+        
+        QPushButton[class="danger"]:hover {
+            background-color: #b92b2f;
+        }
+        
+        /* Success buttons */
+        QPushButton[class="success"] {
+            background-color: #107c10;
+        }
+        
+        QPushButton[class="success"]:hover {
+            background-color: #0e6e0e;
+        }
+        
+        /* Input Field Styling - Glassy Effect */
+        QLineEdit {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:1 rgba(248, 252, 255, 0.8));
+            border: 1px solid rgba(135, 206, 235, 0.6);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #2c3e50;
+            font-size: 13px;
+            selection-background-color: rgba(30, 144, 255, 0.3);
+        }
+        
+        QLineEdit:focus {
+            border: 2px solid rgba(30, 144, 255, 0.8);
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 1.0), stop:1 rgba(240, 248, 255, 0.9));
+        }
+        
+        QComboBox {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:1 rgba(248, 252, 255, 0.8));
+            border: 1px solid rgba(135, 206, 235, 0.6);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+        
+        QComboBox:hover {
+            border: 2px solid rgba(30, 144, 255, 0.7);
+        }
+        
+        QComboBox::drop-down {
+            border: none;
+            background: transparent;
+        }
+        
+        QComboBox::down-arrow {
+            image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xIDFMNiA2TDExIDEiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+);
+        }
+        
+        /* Table Styling - Glassy Aero */
+        QTableWidget {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.95), stop:1 rgba(248, 252, 255, 0.85));
+            alternate-background-color: rgba(230, 243, 255, 0.5);
+            gridline-color: rgba(135, 206, 235, 0.4);
+            border: 1px solid rgba(135, 206, 235, 0.6);
+            border-radius: 10px;
+            color: #2c3e50;
+            selection-background-color: rgba(30, 144, 255, 0.3);
+        }
+        
+        QTableWidget::item {
+            padding: 10px;
+            border: none;
+        }
+        
+        QHeaderView::section {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(173, 216, 255, 0.9), stop:1 rgba(135, 206, 235, 0.8));
+            color: #1e3a8a;
+            padding: 12px;
+            border: none;
+            border-bottom: 1px solid rgba(30, 144, 255, 0.3);
+            font-weight: 700;
+            font-size: 13px;
+        }
+        
+        /* Progress Bar Styling - Colorful Aero */
+        QProgressBar {
+            border: 1px solid rgba(135, 206, 235, 0.6);
+            border-radius: 8px;
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:1 rgba(248, 252, 255, 0.8));
+            text-align: center;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        QProgressBar::chunk {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #ff6b6b, stop:0.2 #ffa500, stop:0.4 #ffeb3b, 
+                stop:0.6 #4caf50, stop:0.8 #2196f3, stop:1 #9c27b0);
+            border-radius: 6px;
+        }
+        
+        /* Group Box Styling - Glassy Containers */
+        QGroupBox {
+            font-weight: 600;
+            border: 1px solid rgba(135, 206, 235, 0.6);
+            border-radius: 12px;
+            margin-top: 15px;
+            padding-top: 15px;
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.8), stop:1 rgba(240, 248, 255, 0.7));
+            color: #2c3e50;
+        }
+        
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 15px;
+            padding: 0 10px 0 10px;
+            color: #1e3a8a;
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.9), stop:1 rgba(240, 248, 255, 0.8));
+            border-radius: 4px;
+        }
+        
+        /* List Widget Styling */
+        QListWidget {
+            background-color: #2d2d2d;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            alternate-background-color: #333333;
+        }
+        
+        QListWidget::item {
+            padding: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        QListWidget::item:selected {
+            background-color: #0078d4;
+        }
+        
+        QListWidget::item:hover {
+            background-color: #404040;
+        }
+        
+        /* Text Edit Styling */
+        QTextEdit, QPlainTextEdit {
+            background-color: #2d2d2d;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            color: #ffffff;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            selection-background-color: #0078d4;
+        }
+        
+        /* Status Bar Styling - Glassy Bottom */
+        QStatusBar {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(173, 216, 255, 0.8), stop:1 rgba(135, 206, 235, 0.7));
+            border-top: 1px solid rgba(30, 144, 255, 0.3);
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+        
+        QStatusBar QLabel {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin: 2px;
+        }
+        
+        /* Scrollbar Styling - Glassy Scrollbars */
+        QScrollBar:vertical {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(255, 255, 255, 0.7), stop:1 rgba(240, 248, 255, 0.6));
+            width: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(135, 206, 235, 0.3);
+        }
+        
+        QScrollBar::handle:vertical {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(173, 216, 255, 0.8), stop:1 rgba(135, 206, 235, 0.7));
+            border-radius: 7px;
+            min-height: 25px;
+            border: 1px solid rgba(30, 144, 255, 0.4);
+        }
+        
+        QScrollBar::handle:vertical:hover {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 rgba(100, 200, 255, 0.9), stop:1 rgba(30, 144, 255, 0.8));
+        }
+        
+        QScrollBar:horizontal {
+            background-color: #2d2d2d;
+            height: 12px;
+            border-radius: 6px;
+        }
+        
+        QScrollBar::handle:horizontal {
+            background-color: #484848;
+            border-radius: 6px;
+            min-width: 20px;
+        }
+        
+        QScrollBar::handle:horizontal:hover {
+            background-color: #0078d4;
+        }
+        
+        QScrollBar::add-line, QScrollBar::sub-line {
+            border: none;
+            background: none;
+        }
+        
+        /* Checkbox and Radio Button Styling */
+        QCheckBox {
+            color: #ffffff;
+            spacing: 8px;
+        }
+        
+        QCheckBox::indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid #3c3c3c;
+            background-color: #2d2d2d;
+        }
+        
+        QCheckBox::indicator:checked {
+            background-color: #0078d4;
+            border-color: #0078d4;
+        }
+        
+        /* Tooltip Styling - Glassy Aero Tooltips */
+        QToolTip {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(255, 255, 255, 0.95), stop:1 rgba(240, 248, 255, 0.9));
+            color: #2c3e50;
+            border: 2px solid rgba(30, 144, 255, 0.6);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        """
+        
+        self.setStyleSheet(app_style)
+        
+        # Set window properties for better appearance
+        self.setMinimumSize(1000, 700)
+        self.resize(1200, 800)
 
     def init_ui(self):
         # Create central widget with tabs
@@ -824,38 +1173,297 @@ class RcloneGUI(QMainWindow):
         self.add_update_menu()
     
     def setup_dashboard_tab(self):
-        """Setup the main dashboard with system overview and stats"""
+        """Setup the enhanced dashboard with beautiful visual elements and system overview"""
         dashboard_widget = QWidget()
         self.tabs.addTab(dashboard_widget, "🏠 Dashboard")
-        layout = QVBoxLayout(dashboard_widget)
+        main_layout = QVBoxLayout(dashboard_widget)
+        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(20, 20, 20, 20)
         
-        # System Stats Section
-        stats_group = QGroupBox("System Overview")
-        stats_layout = QFormLayout(stats_group)
+        # Welcome header with app info
+        welcome_section = QGroupBox("🌟 Welcome to NGBrowser")
+        welcome_layout = QVBoxLayout(welcome_section)
         
+        app_title = QLabel("NGBrowser v1.0.1")
+        app_title.setStyleSheet("""
+            QLabel {
+                font-size: 28px;
+                font-weight: bold;
+                color: #1e3a8a;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 rgba(255, 255, 255, 0.0), stop:0.5 rgba(173, 216, 255, 0.3), stop:1 rgba(255, 255, 255, 0.0));
+                border-radius: 8px;
+                padding: 10px;
+                margin: 5px;
+            }
+        """)
+        app_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        app_subtitle = QLabel("🥽 Quest VR Sideloading • ☁️ Cloud Storage • 🔄 Auto-Updates")
+        app_subtitle.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: 500;
+                color: #2c3e50;
+                text-align: center;
+                margin: 5px;
+            }
+        """)
+        app_subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        welcome_layout.addWidget(app_title)
+        welcome_layout.addWidget(app_subtitle)
+        main_layout.addWidget(welcome_section)
+        
+        # Create two-column layout for stats
+        stats_container = QHBoxLayout()
+        
+        # System Stats Section (Enhanced)
+        stats_group = QGroupBox("📊 System Overview")
+        stats_layout = QVBoxLayout(stats_group)
+        
+        # Create grid layout for stats
+        stats_grid = QVBoxLayout()
+        
+        # Uptime stat with icon
+        uptime_container = QHBoxLayout()
+        uptime_icon = QLabel("⏱️")
+        uptime_icon.setStyleSheet("font-size: 20px; margin-right: 8px;")
+        uptime_label_text = QLabel("Uptime:")
+        uptime_label_text.setStyleSheet("font-weight: 600; color: #2c3e50;")
         self.uptime_label = QLabel("0 seconds")
+        self.uptime_label.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(173, 216, 255, 0.3), stop:1 rgba(135, 206, 235, 0.2));
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: bold;
+                color: #1e3a8a;
+            }
+        """)
+        uptime_container.addWidget(uptime_icon)
+        uptime_container.addWidget(uptime_label_text)
+        uptime_container.addStretch()
+        uptime_container.addWidget(self.uptime_label)
+        stats_grid.addLayout(uptime_container)
+        
+        # Total transfers stat
+        transfer_container = QHBoxLayout()
+        transfer_icon = QLabel("📊")
+        transfer_icon.setStyleSheet("font-size: 20px; margin-right: 8px;")
+        transfer_label_text = QLabel("Total Transferred:")
+        transfer_label_text.setStyleSheet("font-weight: 600; color: #2c3e50;")
         self.total_transfers_label = QLabel("0 B")
+        self.total_transfers_label.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(76, 175, 80, 0.3), stop:1 rgba(139, 195, 74, 0.2));
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: bold;
+                color: #2e7d32;
+            }
+        """)
+        transfer_container.addWidget(transfer_icon)
+        transfer_container.addWidget(transfer_label_text)
+        transfer_container.addStretch()
+        transfer_container.addWidget(self.total_transfers_label)
+        stats_grid.addLayout(transfer_container)
+        
+        # Active transfers stat
+        active_container = QHBoxLayout()
+        active_icon = QLabel("🔄")
+        active_icon.setStyleSheet("font-size: 20px; margin-right: 8px;")
+        active_label_text = QLabel("Active Transfers:")
+        active_label_text.setStyleSheet("font-weight: 600; color: #2c3e50;")
         self.active_transfers_label = QLabel("0")
+        self.active_transfers_label.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(255, 152, 0, 0.3), stop:1 rgba(255, 193, 7, 0.2));
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: bold;
+                color: #f57c00;
+            }
+        """)
+        active_container.addWidget(active_icon)
+        active_container.addWidget(active_label_text)
+        active_container.addStretch()
+        active_container.addWidget(self.active_transfers_label)
+        stats_grid.addLayout(active_container)
+        
+        # Remotes count stat
+        remotes_container = QHBoxLayout()
+        remotes_icon = QLabel("☁️")
+        remotes_icon.setStyleSheet("font-size: 20px; margin-right: 8px;")
+        remotes_label_text = QLabel("Cloud Remotes:")
+        remotes_label_text.setStyleSheet("font-weight: 600; color: #2c3e50;")
         self.remotes_count_label = QLabel("0")
+        self.remotes_count_label.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(156, 39, 176, 0.3), stop:1 rgba(171, 71, 188, 0.2));
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: bold;
+                color: #7b1fa2;
+            }
+        """)
+        remotes_container.addWidget(remotes_icon)
+        remotes_container.addWidget(remotes_label_text)
+        remotes_container.addStretch()
+        remotes_container.addWidget(self.remotes_count_label)
+        stats_grid.addLayout(remotes_container)
         
-        stats_layout.addRow("Uptime:", self.uptime_label)
-        stats_layout.addRow("Total Transferred:", self.total_transfers_label)
-        stats_layout.addRow("Active Transfers:", self.active_transfers_label)
-        stats_layout.addRow("Configured Remotes:", self.remotes_count_label)
+        stats_layout.addLayout(stats_grid)
+        stats_container.addWidget(stats_group)
         
-        layout.addWidget(stats_group)
+        # Quest Status Section
+        quest_status_group = QGroupBox("🥽 Quest Status")
+        quest_status_layout = QVBoxLayout(quest_status_group)
         
-        # Recent Activity Section
-        activity_group = QGroupBox("Recent Activity")
+        self.quest_status_label = QLabel("🔴 Not Connected")
+        self.quest_status_label.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: bold;
+                padding: 12px;
+                border-radius: 8px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(244, 67, 54, 0.3), stop:1 rgba(229, 115, 115, 0.2));
+                color: #c62828;
+            }
+        """)
+        self.quest_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        quest_info_label = QLabel("Connect your Quest headset to enable sideloading features")
+        quest_info_label.setStyleSheet("""
+            QLabel {
+                color: #666;
+                font-style: italic;
+                text-align: center;
+                margin: 8px;
+            }
+        """)
+        quest_info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        quest_status_layout.addWidget(self.quest_status_label)
+        quest_status_layout.addWidget(quest_info_label)
+        stats_container.addWidget(quest_status_group)
+        
+        main_layout.addLayout(stats_container)
+        
+        # Recent Activity Section (Enhanced)
+        activity_group = QGroupBox("📋 Recent Activity")
         activity_layout = QVBoxLayout(activity_group)
         
+        # Add activity controls
+        activity_controls = QHBoxLayout()
+        clear_activity_btn = QPushButton("🗑️ Clear Activity")
+        clear_activity_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(244, 67, 54, 0.8), stop:1 rgba(229, 115, 115, 0.7));
+                color: white;
+                font-weight: bold;
+                border: 1px solid rgba(198, 40, 40, 0.8);
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(244, 67, 54, 0.9), stop:1 rgba(229, 115, 115, 0.8));
+            }
+        """)
+        clear_activity_btn.clicked.connect(self.clear_activity_log)
+        activity_controls.addStretch()
+        activity_controls.addWidget(clear_activity_btn)
+        activity_layout.addLayout(activity_controls)
+        
         self.activity_list = QListWidget()
+        self.activity_list.setStyleSheet("""
+            QListWidget {
+                font-family: 'Consolas', 'Courier New', monospace;
+                font-size: 12px;
+                min-height: 200px;
+            }
+        """)
         activity_layout.addWidget(self.activity_list)
         
-        layout.addWidget(activity_group)
+        main_layout.addWidget(activity_group)
         
-
-        layout.addStretch()
+        # Add some initial activity messages
+        self.add_activity_message("🚀 NGBrowser started successfully")
+        self.add_activity_message("⚙️ Initializing cloud storage connections...")
+        self.add_activity_message("🥽 Quest sideloading features ready")
+    
+    def add_activity_message(self, message):
+        """Add a timestamped message to the activity log"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        formatted_message = f"[{timestamp}] {message}"
+        
+        # Create styled list item
+        item = QListWidgetItem(formatted_message)
+        
+        # Color code different types of messages
+        if "🚀" in message or "started" in message.lower():
+            item.setBackground(QColor(76, 175, 80, 30))  # Green tint
+        elif "⚙️" in message or "initializing" in message.lower():
+            item.setBackground(QColor(255, 152, 0, 30))  # Orange tint
+        elif "🥽" in message or "quest" in message.lower():
+            item.setBackground(QColor(156, 39, 176, 30))  # Purple tint
+        elif "❌" in message or "error" in message.lower():
+            item.setBackground(QColor(244, 67, 54, 30))  # Red tint
+        elif "✅" in message or "success" in message.lower():
+            item.setBackground(QColor(76, 175, 80, 40))  # Stronger green
+        
+        if hasattr(self, 'activity_list'):
+            self.activity_list.addItem(item)
+            # Auto-scroll to bottom
+            self.activity_list.scrollToBottom()
+            
+            # Limit activity log to 100 items
+            if self.activity_list.count() > 100:
+                self.activity_list.takeItem(0)
+    
+    def clear_activity_log(self):
+        """Clear all activity log messages"""
+        if hasattr(self, 'activity_list'):
+            self.activity_list.clear()
+            self.add_activity_message("🗑️ Activity log cleared")
+    
+    def update_quest_status(self, connected=False, device_name=""):
+        """Update the Quest connection status on the dashboard"""
+        if hasattr(self, 'quest_status_label'):
+            if connected:
+                self.quest_status_label.setText(f"🟢 Connected: {device_name}")
+                self.quest_status_label.setStyleSheet("""
+                    QLabel {
+                        font-size: 16px;
+                        font-weight: bold;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                            stop:0 rgba(76, 175, 80, 0.3), stop:1 rgba(139, 195, 74, 0.2));
+                        color: #2e7d32;
+                    }
+                """)
+                self.add_activity_message(f"🟢 Quest device connected: {device_name}")
+            else:
+                self.quest_status_label.setText("🔴 Not Connected")
+                self.quest_status_label.setStyleSheet("""
+                    QLabel {
+                        font-size: 16px;
+                        font-weight: bold;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                            stop:0 rgba(244, 67, 54, 0.3), stop:1 rgba(229, 115, 115, 0.2));
+                        color: #c62828;
+                    }
+                """)
+                if device_name:
+                    self.add_activity_message(f"🔴 Quest device disconnected: {device_name}")
     
     def setup_explorer_tab(self):
         """Setup enhanced file explorer with advanced features"""
