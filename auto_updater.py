@@ -23,9 +23,7 @@ class AutoUpdater(QThread):
     update_complete = pyqtSignal(bool)  # success flag
     error_occurred = pyqtSignal(str)  # error message
     
-    def __init__(self, current_version="1.0.0", update_server="https://api.github.com/repos/YourUsername/NGBrowser/releases/latest"):
-        # TODO: Replace 'YourUsername' with your actual GitHub username
-        # Example: https://api.github.com/repos/johndoe/NGBrowser/releases/latest
+    def __init__(self, current_version="1.0.0", update_server="https://api.github.com/repos/had3s-dev/NGBrowser/releases/latest"):
         super().__init__()
         self.current_version = current_version
         self.update_server = update_server
