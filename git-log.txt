@@ -1,0 +1,138 @@
+commit 4133a197bc58dcb4a0eac70b30790c83d1684baa
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 9 10:51:25 2025 +0100
+
+    Version v1.70.3
+
+commit a30a4909feb6565557e0e08b8ae9d4191d6a5ee3
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 4 14:32:50 2025 +0100
+
+    azureblob: fix server side copy error "requires exactly one scope"
+    
+    Before this change, if not using shared key or SAS URL authentication
+    for the source, rclone gave this error
+    
+        ManagedIdentityCredential.GetToken() requires exactly one scope
+    
+    when doing server side copies.
+    
+    This was introduced in:
+    
+    3a5ddfcd3c1fd686 azureblob: implement multipart server side copy
+    
+    This fixes the problem by creating a temporary SAS URL using user
+    delegation to read the source blob when copying.
+    
+    Fixes #8662
+
+commit cdc6d22929a3dd87c2e895cfc9c92b6d39927749
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Tue Nov 26 20:32:06 2024 +0100
+
+    docs: explain the json log format in more detail
+
+commit e319406f52f9ca5853ff70093984c764fc2d4222
+Author: albertony <12441419+albertony@users.noreply.github.com>
+Date:   Mon Jul 7 09:16:55 2025 +0200
+
+    check: fix difference report (was reporting error counts)
+
+commit ac54cccced82218d69f420a91b2d4415e9159337
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Fri Jul 4 16:28:46 2025 +0100
+
+    linkbox: fix upload error "user upload file not exist"
+    
+    Linkbox have started issuing 302 redirects on some of their PUT
+    requests when rclone uploads a file.
+    
+    This is problematic for several reasons:
+    
+    1. This is the wrong redirect code - it should be 307 to preserve the method
+    2. Since Expect/100-Continue isn't supported the whole body gets uploaded
+    
+    This fixes the problem by first doing a HEAD request on the URL. This
+    will allow us to read the redirect Location and not upload the body to
+    the wrong place.
+    
+    It should still work (albeit a little more inefficiently) if Linkbox
+    stop redirecting the PUT requests.
+    
+    See: https://forum.rclone.org/t/linkbox-upload-error/51795
+    Fixes: #8606
+
+commit 4c4d366e2996c0ab6c2a6fe455b8f06b89dab941
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 10:26:42 2025 +0100
+
+    march: fix deadlock when using --no-traverse - fixes #8656
+    
+    This ocurred whenever there were more than 100 files in the source due
+    to the output channel filling up.
+    
+    The fix is not to use list.NewSorter but take more care to output the
+    dst objects in the same order the src objects are delivered. As the
+    src objects are delivered sorted, no sorting is needed.
+    
+    In order not to cause another deadlock, we need to send nil dst
+    objects which is safe since this adjusts the termination conditions
+    for the channels.
+    
+    Thanks to @jeremy for the test script the Go tests are based on.
+
+commit 64fc3d05ae4aace7cbd7c6de82498f556b49ff2d
+Author: wiserain <mail275@gmail.com>
+Date:   Fri Jul 4 15:27:29 2025 +0900
+
+    pikpak: improve error handling for missing links and unrecoverable 500s
+    
+    This commit improves error handling in two specific scenarios:
+    
+    * Missing Download Links: A 5-second delay is introduced when a download
+      link is missing, as low-level retries aren't enough. Empirically, it
+      takes about 30s-1m for the link to become available. This resolves
+      failed integration tests: backend: TestIntegration/FsMkdir/FsPutFiles/
+      ObjectUpdate, vfs: TestFileReadAtNonZeroLength
+    
+    * Unrecoverable 500 Errors: The shouldRetry method is updated to skip
+      retries for 500 errors from "idx.shub.mypikpak.com" indicating "no
+      record for gcid." These errors are non-recoverable, so retrying is futile.
+
+commit 90386efeb16053b4b8446f46bd7e21b25b05789e
+Author: WeidiDeng <weidi_deng@icloud.com>
+Date:   Thu Jul 3 16:42:15 2025 +0800
+
+    webdav: fix setting modtime to that of local object instead of remote
+    
+    In this commit the source of the modtime got changed to the wrong object by accident
+    
+    0b9671313b14ffe8 webdav: add an ownCloud Infinite Scale vendor that enables tus chunked upload support
+    
+    This reverts that change and fixes the integration tests.
+
+commit 5f78b472956d1039e1d09332e90745e100a835a9
+Author: Davide Bizzarri <davide.bizzarri@willhaben.at>
+Date:   Tue May 13 18:35:57 2025 +0200
+
+    fix: b2 versionAt read metadata
+
+commit 775ee90fa5ea12524b7ed2a7c3937b99a4d52119
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 15:36:43 2025 +0100
+
+    Start v1.70.3-DEV development
+
+commit 444392bf9c8c34610228dc82e072c046641b3f04
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Wed Jul 2 15:32:17 2025 +0100
+
+    docs: fix filescom/filelu link mixup
+    
+    See: https://forum.rclone.org/t/a-small-bug-in-rclone-documentation/51774
+
+commit d36259749f8228fb1d2cd362844777b9e67b4711
+Author: Nick Craig-Wood <nick@craig-wood.com>
+Date:   Mon Jun 30 11:09:37 2025 +0100
+
+    docs: update link for filescom
