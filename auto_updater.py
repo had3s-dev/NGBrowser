@@ -49,7 +49,7 @@ class AutoUpdater(QThread):
             response.raise_for_status()
             
             data = response.json()
-            latest_version = data.get('tag_name', '').lstrip('v')
+            latest_version = data.get('tag_name', '').lstrip('vV')
             
             if self._is_newer_version(latest_version, self.current_version):
                 self.new_version = latest_version
@@ -213,30 +213,76 @@ class AutoUpdater(QThread):
             raise e
     
     def _replace_executable(self):
-        """Replace the current executable with the new one"""
+        """Replace the current executable with the new one using delayed replacement"""
         try:
             current_exe = os.path.join(self.app_path, self.executable_name)
-            backup_exe = current_exe + ".backup"
+            new_exe = current_exe + ".new"
             
-            # Create backup
-            if os.path.exists(current_exe):
-                shutil.copy2(current_exe, backup_exe)
+            # Copy new version to .new file
+            shutil.copy2(self.downloaded_file, new_exe)
             
-            # Replace with new version
-            shutil.copy2(self.downloaded_file, current_exe)
+            # Create batch script for delayed replacement
+            self._create_replacement_script(current_exe, new_exe)
             
-            # Remove backup if successful
-            if os.path.exists(backup_exe):
-                os.remove(backup_exe)
-                
         except Exception as e:
-            # Restore backup if something went wrong
-            backup_exe = os.path.join(self.app_path, self.executable_name + ".backup")
-            if os.path.exists(backup_exe):
-                current_exe = os.path.join(self.app_path, self.executable_name)
-                shutil.copy2(backup_exe, current_exe)
-                os.remove(backup_exe)
             raise e
+    
+    def _create_replacement_script(self, current_exe, new_exe):
+        """Create a batch script to replace the executable after app exits"""
+        try:
+            script_path = os.path.join(self.app_path, "update_replacer.bat")
+            
+            # Create batch script content
+            script_content = f'''@echo off
+echo Updating NGBrowser...
+:WAIT
+tasklist /FI "IMAGENAME eq {self.executable_name}" 2>NUL | find /I /N "{self.executable_name}">NUL
+if "%ERRORLEVEL%"=="0" (
+    timeout /t 2 /nobreak >NUL
+    goto WAIT
+)
+
+echo Replacing executable...
+if exist "{current_exe}.backup" del "{current_exe}.backup"
+if exist "{current_exe}" ren "{current_exe}" "{self.executable_name}.backup"
+if exist "{new_exe}" (
+    ren "{new_exe}" "{self.executable_name}"
+    echo Update completed successfully!
+    echo Starting NGBrowser...
+    start "" "{current_exe}"
+) else (
+    echo ERROR: New executable not found!
+    if exist "{current_exe}.backup" ren "{current_exe}.backup" "{self.executable_name}"
+)
+
+echo Cleaning up...
+if exist "{current_exe}.backup" del "{current_exe}.backup"
+echo Update process finished.
+del "%~f0"
+'''
+            
+            # Write the script
+            with open(script_path, 'w') as f:
+                f.write(script_content)
+                
+            # Store script path for execution
+            self.replacement_script = script_path
+            
+        except Exception as e:
+            raise Exception(f"Failed to create replacement script: {str(e)}")
+    
+    def execute_replacement(self):
+        """Execute the replacement script and exit the application"""
+        try:
+            if hasattr(self, 'replacement_script') and os.path.exists(self.replacement_script):
+                # Run the script detached from this process
+                import subprocess
+                subprocess.Popen(self.replacement_script, shell=True, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+                return True
+            return False
+        except Exception as e:
+            self.error_occurred.emit(f"Failed to execute replacement: {str(e)}")
+            return False
     
     def run(self):
         """Thread run method for background update checking"""

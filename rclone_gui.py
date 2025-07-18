@@ -755,6 +755,55 @@ class RcloneGUI(QMainWindow):
         # Check for updates on startup if enabled
         if self.update_settings.should_check_for_updates():
             QTimer.singleShot(3000, self.check_for_updates_background)  # Check after 3 seconds
+    
+    def check_for_updates_background(self):
+        """Check for updates in background"""
+        if not self.auto_updater:
+            self.auto_updater = AutoUpdater(self.app_version)
+            self.auto_updater.update_available.connect(self.on_update_available)
+            self.auto_updater.error_occurred.connect(self.on_update_error)
+            self.auto_updater.update_complete.connect(self.on_update_complete)
+        
+        self.auto_updater.start()
+    
+    def on_update_available(self, version, changelog):
+        """Handle update available signal"""
+        self.log_message(f"Update available: v{version}", "info")
+        
+        if not self.update_dialog:
+            self.update_dialog = UpdateDialog(version, changelog, self)
+            self.update_dialog.update_requested.connect(self.start_update_download)
+            self.update_dialog.show()
+    
+    def on_update_error(self, error_message):
+        """Handle update error signal"""
+        self.log_message(f"Update error: {error_message}", "error")
+    
+    def on_update_complete(self, success):
+        """Handle update completion"""
+        if success:
+            self.log_message("Update downloaded successfully. Preparing to restart...", "info")
+            # Execute delayed replacement and restart
+            if hasattr(self.auto_updater, 'execute_replacement'):
+                if self.auto_updater.execute_replacement():
+                    # Close the application to allow replacement
+                    QTimer.singleShot(1000, self.close)
+                else:
+                    self.log_message("Failed to start update replacement", "error")
+            else:
+                self.log_message("Update completed but replacement not available", "warning")
+        else:
+            self.log_message("Update failed", "error")
+    
+    def start_update_download(self):
+        """Start downloading the update"""
+        if self.auto_updater:
+            self.auto_updater.download_and_install()
+    
+    def add_update_menu(self):
+        """Add update menu to the main window"""
+        # This method is called from init_ui but may not be implemented yet
+        pass
 
     def init_ui(self):
         # Create central widget with tabs
