@@ -176,27 +176,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **rclone** - The powerful command-line program for cloud storage
-- **PyQt6** - The cross-platform GUI framework
-- **Contributors** - Everyone who has contributed to this project
-
-## 📈 Changelog
-
-### v1.0.0
-- Initial release
-- Modern PyQt6 interface
-- Real-time transfer monitoring
-- Auto-update functionality
-- Comprehensive logging
-- Multi-cloud support
-
 ---
 
 <div align="center">
-  <p>Made with ❤️ by the NGBrowser team</p>
-  <p>Star ⭐ this repository if you find it useful!</p>
+  <p>Made with ❤️ by the NexusRemains team</p>
 </div>
-3. Run the build script as administrator if you encounter permission errors
-
-## License
-
-This project is open source and available under the MIT License.
