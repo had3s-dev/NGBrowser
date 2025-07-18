@@ -31,13 +31,13 @@ NGBrowser is a modern, feature-rich GUI for rclone that provides an intuitive in
 
 ## 🛠️ Installation
 
-### Option 1: Download Release (Recommended)
+### Option 1: Download Release (Recommended - comes with NG-Games CONF)
 1. Go to [Releases](https://github.com/YourUsername/NGBrowser/releases)
 2. Download the latest `NGBrowser.exe`
 3. Place your `rclone.conf` in the same directory
 4. Run `NGBrowser.exe`
 
-### Option 2: Build from Source
+### Option 2: Build from Source (BYO CONF)
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/YourUsername/NGBrowser.git
