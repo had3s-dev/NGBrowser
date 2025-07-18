@@ -122,19 +122,28 @@ def download_quest_adb_tools():
     )
     
     if success:
-        # Copy adb.exe to main directory for easy access
-        adb_source = os.path.join(quest_adb_dir, "adb.exe")
-        if os.path.exists(adb_source):
-            shutil.copy2(adb_source, "adb.exe")
-            print("   ✅ Copied Quest ADB to main directory")
-        else:
-            # Look for adb.exe in subdirectories
-            for root, dirs, files in os.walk(quest_adb_dir):
-                if "adb.exe" in files:
-                    adb_source = os.path.join(root, "adb.exe")
-                    shutil.copy2(adb_source, "adb.exe")
-                    print(f"   ✅ Copied Quest ADB from {adb_source} to main directory")
-                    break
+        # Copy all Quest ADB files to main directory for easy access and PyInstaller packaging
+        quest_files_to_copy = ["adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll"]
+        
+        for file_name in quest_files_to_copy:
+            # Try direct path first
+            source_path = os.path.join(quest_adb_dir, file_name)
+            if os.path.exists(source_path):
+                shutil.copy2(source_path, file_name)
+                print(f"   ✅ Copied {file_name} to main directory")
+            else:
+                # Look for file in subdirectories
+                found = False
+                for root, dirs, files in os.walk(quest_adb_dir):
+                    if file_name in files:
+                        source_path = os.path.join(root, file_name)
+                        shutil.copy2(source_path, file_name)
+                        print(f"   ✅ Copied {file_name} from {source_path} to main directory")
+                        found = True
+                        break
+                
+                if not found:
+                    print(f"   ⚠️ Warning: {file_name} not found in Quest ADB download")
     
     return success
 
@@ -151,12 +160,16 @@ def download_dependencies():
     else:
         print("   ✅ rclone.exe already exists")
     
-    # Download Quest ADB tools if missing
-    if not os.path.exists("adb.exe"):
+    # Download Quest ADB tools if missing (check all required files)
+    quest_adb_files = ["adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll"]
+    missing_adb_files = [f for f in quest_adb_files if not os.path.exists(f)]
+    
+    if missing_adb_files:
+        print(f"   🔄 Missing Quest ADB files: {', '.join(missing_adb_files)}")
         if not download_quest_adb_tools():
             success = False
     else:
-        print("   ✅ Quest ADB tools already exist")
+        print("   ✅ All Quest ADB tools already exist")
     
     if success:
         print("   🎉 All dependencies downloaded successfully!")
@@ -196,7 +209,9 @@ def build():
         'rclone_gui.py': '📄 Main application file',
         'auto_updater.py': '🔄 Auto-updater module',
         'rclone.exe': '⚙️ rclone executable (auto-downloaded)',
-        'adb.exe': '🔧 ADB for Quest sideloading (auto-downloaded)'
+        'adb.exe': '🔧 ADB for Quest sideloading (auto-downloaded)',
+        'AdbWinApi.dll': '🔧 ADB Windows API DLL (auto-downloaded)',
+        'AdbWinUsbApi.dll': '🔧 ADB Windows USB API DLL (auto-downloaded)'
     }
     
     missing_files = []
@@ -272,7 +287,22 @@ def build():
         '--add-data=adb.exe;.',
     ]
     
-    # Add Quest ADB tools directory if it exists
+    # Add individual Quest ADB DLL files to root directory (required for adb.exe to work)
+    quest_adb_files = ['AdbWinApi.dll', 'AdbWinUsbApi.dll']
+    for adb_file in quest_adb_files:
+        if os.path.exists(adb_file):
+            cmd.append(f'--add-data={adb_file};.')
+            print(f"   ✅ Including {adb_file} in root directory")
+        elif os.path.exists('quest_adb'):
+            # Look for the file in quest_adb directory
+            for root, dirs, files in os.walk('quest_adb'):
+                if adb_file in files:
+                    source_path = os.path.join(root, adb_file)
+                    cmd.append(f'--add-data={source_path};.')
+                    print(f"   ✅ Including {adb_file} from {source_path} in root directory")
+                    break
+    
+    # Add Quest ADB tools directory if it exists (for completeness)
     if os.path.exists('quest_adb'):
         cmd.append('--add-data=quest_adb;quest_adb')
         print("   ✅ Including Quest ADB tools directory")
