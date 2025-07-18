@@ -109,20 +109,6 @@ NGBrowser is a modern, feature-rich GUI for rclone that provides an intuitive in
 - **Settings** - Help → Update Settings
 - **Version Skipping** - Skip unwanted versions
 
-## 🔧 Development
-
-### Project Structure
-```
-NGBrowser/
-├── rclone_gui.py          # Main application
-├── auto_updater.py        # Auto-update functionality
-├── build.py              # Build script
-├── requirements.txt      # Python dependencies
-├── README.md            # This file
-├── .gitignore          # Git ignore rules
-└── dist/               # Built executables
-```
-
 ### Building
 
 ```bash
